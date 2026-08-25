@@ -55,8 +55,12 @@ app.get('/{*splat}', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🦎 Intelligent Iguanas API running on port ${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-  console.log(`   Config: http://localhost:${PORT}/api/config`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🦎 Intelligent Iguanas API running on port ${PORT}`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    console.log(`   Config: http://localhost:${PORT}/api/config`);
+  });
+}
+
+export default app;
