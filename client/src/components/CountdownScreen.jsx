@@ -5,7 +5,6 @@ import { getTimeRemaining, LAUNCH_TIMESTAMP } from '../utils/launchConfig';
 export default function CountdownScreen({ onLaunchComplete }) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining());
   const [transitionState, setTransitionState] = useState('active'); // 'active' | 'launching' | 'finished'
-  const [soundEnabled, setSoundEnabled] = useState(false);
 
   const audioContextRef = useRef(null);
   const clockGainRef = useRef(null);
@@ -87,7 +86,6 @@ export default function CountdownScreen({ onLaunchComplete }) {
       if (clockRunIdRef.current !== runId) return;
 
       clockGainRef.current.gain.setValueAtTime(0.6, context.currentTime);
-      setSoundEnabled(context.state === 'running');
 
       if (!clockSchedulerRef.current) {
         const msToNextSecond = 1000 - (Date.now() % 1000);
@@ -110,38 +108,20 @@ export default function CountdownScreen({ onLaunchComplete }) {
     }
   };
 
-  const toggleSound = async () => {
-    if (!soundEnabled) {
-      await startClock();
-      if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        setSoundEnabled(true);
-      }
-    } else {
-      stopClock();
-      setSoundEnabled(false);
-    }
-  };
-
   useEffect(() => {
-    // Attempt auto-start (some browsers allow if user clicked to navigate here)
+    // Attempt auto-start clock ticking on mount
     startClock();
 
-    // Browser autoplay policy handler: enable audio on first user touch/click/keypress
-    const enableAudioOnUserGesture = async () => {
-      await startClock();
-      if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        setSoundEnabled(true);
-      }
+    // Enable / resume audio on ANY user gesture/movement across the window
+    const enableAudioOnUserGesture = () => {
+      startClock();
     };
 
-    window.addEventListener('click', enableAudioOnUserGesture, { once: true });
-    window.addEventListener('touchstart', enableAudioOnUserGesture, { once: true });
-    window.addEventListener('keydown', enableAudioOnUserGesture, { once: true });
+    const events = ['click', 'touchstart', 'pointerdown', 'mousemove', 'keydown', 'scroll'];
+    events.forEach((evt) => window.addEventListener(evt, enableAudioOnUserGesture, { passive: true }));
 
     return () => {
-      window.removeEventListener('click', enableAudioOnUserGesture);
-      window.removeEventListener('touchstart', enableAudioOnUserGesture);
-      window.removeEventListener('keydown', enableAudioOnUserGesture);
+      events.forEach((evt) => window.removeEventListener(evt, enableAudioOnUserGesture));
       stopClock();
     };
   }, []);
@@ -189,24 +169,6 @@ export default function CountdownScreen({ onLaunchComplete }) {
         <div className="countdown-circuit-overlay"></div>
         <ParticleBackground />
       </div>
-
-      <img
-        src="/heritage-emblem.png"
-        alt=""
-        aria-hidden="true"
-        className="countdown-corner-art"
-      />
-
-      {/* Sound Toggle Button (Fixes browser autoplay policy restriction) */}
-      <button
-        onClick={toggleSound}
-        className={`sound-toggle-btn ${soundEnabled ? 'sound-active' : ''}`}
-        aria-label={soundEnabled ? 'Mute clock sound' : 'Enable clock sound'}
-        title={soundEnabled ? 'Sound Enabled' : 'Click anywhere or tap here to enable clock ticking sound'}
-      >
-        <span className="sound-icon">{soundEnabled ? '🔊' : '🔇'}</span>
-        <span className="sound-label">{soundEnabled ? 'TICKING ON' : 'ENABLE SOUND'}</span>
-      </button>
 
       <div className="countdown-container">
         {/* Official Logo with breathing ambient glow */}
