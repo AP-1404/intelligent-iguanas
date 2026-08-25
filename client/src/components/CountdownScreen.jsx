@@ -7,10 +7,9 @@ export default function CountdownScreen({ onLaunchComplete }) {
   const [transitionState, setTransitionState] = useState('active'); // 'active' | 'launching' | 'finished'
 
   const audioCtxRef = useRef(null);
-  const bgAudioRef = useRef(null);
   const tickAltRef = useRef(false);
 
-  // Play Web Audio synthesized tick-tock as well
+  // Play crisp mechanical tick-tock audio
   const playTickSound = () => {
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -40,8 +39,9 @@ export default function CountdownScreen({ onLaunchComplete }) {
       osc.frequency.setValueAtTime(freq, now);
       osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + 0.04);
 
+      // Volume envelope - clear, crisp click
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.35, now + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.4, now + 0.003);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
 
       osc.connect(gain);
@@ -49,58 +49,46 @@ export default function CountdownScreen({ onLaunchComplete }) {
 
       osc.start(now);
       osc.stop(now + 0.05);
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Audio tick error:', e);
+    }
   };
 
-  // Immediate Audio Autoplay Engine (HTML5 Audio + Web Audio)
+  // Immediate Audio Activation on Page Load & Comprehensive Interaction Listeners
   useEffect(() => {
-    const startAllAudio = () => {
-      // 1. HTML5 Audio Element Playback
-      if (bgAudioRef.current) {
-        bgAudioRef.current.volume = 0.6;
-        bgAudioRef.current.play().catch(() => {});
-      }
-
-      // 2. Web Audio API Context Un-suspend
+    const activateAudio = () => {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!audioCtxRef.current && AudioContextClass) {
           audioCtxRef.current = new AudioContextClass();
         }
         if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume().catch(() => {});
+          audioCtxRef.current.resume().then(() => {
+            playTickSound();
+          }).catch(() => {});
         }
       } catch (e) {}
     };
 
-    // Execute immediately on component mount
-    startAllAudio();
+    // Attempt sound immediately on load / component mount
+    activateAudio();
+    playTickSound();
 
-    // Loop retry every 250ms until browser starts playing audio
-    const autoPlayInterval = setInterval(() => {
-      if (bgAudioRef.current && !bgAudioRef.current.paused) {
-        clearInterval(autoPlayInterval);
-      } else {
-        startAllAudio();
-      }
-    }, 250);
-
-    // Also activate on DOM load & any browser window event (mousemove, hover, scroll, focus, etc.)
     if (document.readyState === 'complete') {
-      startAllAudio();
+      activateAudio();
     } else {
-      window.addEventListener('load', startAllAudio, { once: true });
-      document.addEventListener('DOMContentLoaded', startAllAudio, { once: true });
+      window.addEventListener('load', activateAudio, { once: true });
+      document.addEventListener('DOMContentLoaded', activateAudio, { once: true });
     }
 
-    const events = ['mousemove', 'pointermove', 'mouseenter', 'focus', 'click', 'touchstart', 'pointerdown', 'keydown', 'scroll'];
-    events.forEach((evt) => window.addEventListener(evt, startAllAudio, { passive: true }));
+    // Listeners for all user interaction & movement events to un-suspend audio context instantly
+    const events = ['click', 'touchstart', 'pointerdown', 'pointermove', 'mousemove', 'keydown', 'scroll', 'mouseenter', 'focus'];
+    events.forEach((evt) => window.addEventListener(evt, activateAudio, { passive: true }));
 
     return () => {
-      clearInterval(autoPlayInterval);
-      window.removeEventListener('load', startAllAudio);
-      document.removeEventListener('DOMContentLoaded', startAllAudio);
-      events.forEach((evt) => window.removeEventListener(evt, startAllAudio));
+      window.removeEventListener('load', activateAudio);
+      document.removeEventListener('DOMContentLoaded', activateAudio);
+      events.forEach((evt) => window.removeEventListener(evt, activateAudio));
     };
   }, []);
 
@@ -125,7 +113,7 @@ export default function CountdownScreen({ onLaunchComplete }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Synchronize tick sound with visual second changes
+  // Play tick sound whenever the second changes
   useEffect(() => {
     if (transitionState === 'active') {
       playTickSound();
@@ -133,9 +121,6 @@ export default function CountdownScreen({ onLaunchComplete }) {
   }, [timeLeft.seconds, transitionState]);
 
   const triggerLaunchSequence = () => {
-    if (bgAudioRef.current) {
-      bgAudioRef.current.pause();
-    }
     setTransitionState('launching');
 
     setTimeout(() => {
@@ -150,17 +135,6 @@ export default function CountdownScreen({ onLaunchComplete }) {
 
   return (
     <div className={`countdown-screen ${transitionState}`} role="region" aria-label="Pre-launch countdown">
-      {/* Hidden HTML5 Audio Element for immediate clock ticking autoplay */}
-      <audio
-        ref={bgAudioRef}
-        src="/cinematic-clock.mp3"
-        autoPlay
-        loop
-        playsInline
-        preload="auto"
-        style={{ display: 'none' }}
-      />
-
       {/* Ambient background layers */}
       <div className="countdown-bg" aria-hidden="true">
         <div className="countdown-grid"></div>
