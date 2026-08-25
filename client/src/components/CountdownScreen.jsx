@@ -197,17 +197,6 @@ export default function CountdownScreen({ onLaunchComplete }) {
         className="countdown-corner-art"
       />
 
-      {/* Sound Toggle Button (Fixes browser autoplay policy restriction) */}
-      <button
-        onClick={toggleSound}
-        className={`sound-toggle-btn ${soundEnabled ? 'sound-active' : ''}`}
-        aria-label={soundEnabled ? 'Mute clock sound' : 'Enable clock sound'}
-        title={soundEnabled ? 'Sound Enabled' : 'Click anywhere or tap here to enable clock ticking sound'}
-      >
-        <span className="sound-icon">{soundEnabled ? '🔊' : '🔇'}</span>
-        <span className="sound-label">{soundEnabled ? 'TICKING ON' : 'ENABLE SOUND'}</span>
-      </button>
-
       <div className="countdown-container">
         {/* Official Logo with breathing ambient glow */}
         <div className="countdown-logo-wrapper">
