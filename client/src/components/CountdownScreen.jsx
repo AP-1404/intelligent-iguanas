@@ -54,28 +54,41 @@ export default function CountdownScreen({ onLaunchComplete }) {
     }
   };
 
-  // Browser Autoplay Policy listener: resume AudioContext on first user gesture anywhere
+  // Immediate Audio Activation on Page Load & Comprehensive Interaction Listeners
   useEffect(() => {
-    const resumeAudio = () => {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!audioCtxRef.current && AudioContextClass) {
-        audioCtxRef.current = new AudioContextClass();
-      }
-      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume().catch(() => {});
-      }
+    const activateAudio = () => {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtxRef.current && AudioContextClass) {
+          audioCtxRef.current = new AudioContextClass();
+        }
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume().then(() => {
+            playTickSound();
+          }).catch(() => {});
+        }
+      } catch (e) {}
     };
 
-    window.addEventListener('click', resumeAudio);
-    window.addEventListener('touchstart', resumeAudio);
-    window.addEventListener('pointerdown', resumeAudio);
-    window.addEventListener('keydown', resumeAudio);
+    // Attempt sound immediately on load / component mount
+    activateAudio();
+    playTickSound();
+
+    if (document.readyState === 'complete') {
+      activateAudio();
+    } else {
+      window.addEventListener('load', activateAudio, { once: true });
+      document.addEventListener('DOMContentLoaded', activateAudio, { once: true });
+    }
+
+    // Listeners for all user interaction & movement events to un-suspend audio context instantly
+    const events = ['click', 'touchstart', 'pointerdown', 'pointermove', 'mousemove', 'keydown', 'scroll', 'mouseenter', 'focus'];
+    events.forEach((evt) => window.addEventListener(evt, activateAudio, { passive: true }));
 
     return () => {
-      window.removeEventListener('click', resumeAudio);
-      window.removeEventListener('touchstart', resumeAudio);
-      window.removeEventListener('pointerdown', resumeAudio);
-      window.removeEventListener('keydown', resumeAudio);
+      window.removeEventListener('load', activateAudio);
+      document.removeEventListener('DOMContentLoaded', activateAudio);
+      events.forEach((evt) => window.removeEventListener(evt, activateAudio));
     };
   }, []);
 
