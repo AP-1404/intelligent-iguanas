@@ -1,151 +1,85 @@
 import { useState, useEffect, useRef } from 'react';
 import ParticleBackground from './ParticleBackground';
-import { getTimeRemaining, LAUNCH_TIMESTAMP } from '../utils/launchConfig';
+import { getTimeRemaining } from '../utils/launchConfig';
 
 export default function CountdownScreen({ onLaunchComplete }) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining());
   const [transitionState, setTransitionState] = useState('active'); // 'active' | 'launching' | 'finished'
-  const [soundEnabled, setSoundEnabled] = useState(false);
 
-  const audioContextRef = useRef(null);
-  const clockGainRef = useRef(null);
-  const clockSchedulerRef = useRef(null);
-  const nextTickRef = useRef(0);
-  const clockRunIdRef = useRef(0);
-  const tickCountRef = useRef(0);
+  const audioCtxRef = useRef(null);
+  const tickAltRef = useRef(false);
 
-  const playTick = (context, time) => {
+  // Play crisp mechanical tick-tock audio
+  const playTickSound = () => {
     try {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
 
-      // Alternate between crisp high tick (1800Hz) and slightly lower tock (1300Hz)
-      const isTick = tickCountRef.current % 2 === 0;
-      tickCountRef.current += 1;
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+      const ctx = audioCtxRef.current;
 
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(isTick ? 1800 : 1300, time);
-      oscillator.frequency.exponentialRampToValueAtTime(isTick ? 900 : 700, time + 0.04);
-
-      // Volume envelope - crisp attack & decay
-      gain.gain.setValueAtTime(0.0001, time);
-      gain.gain.exponentialRampToValueAtTime(0.35, time + 0.003);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
-
-      oscillator.connect(gain);
-      if (clockGainRef.current) {
-        gain.connect(clockGainRef.current);
-      } else {
-        gain.connect(context.destination);
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
       }
 
-      oscillator.start(time);
-      oscillator.stop(time + 0.055);
+      if (ctx.state !== 'running') return;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      const isTick = tickAltRef.current;
+      tickAltRef.current = !isTick;
+
+      const freq = isTick ? 1600 : 1100;
+      const now = ctx.currentTime;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, now + 0.04);
+
+      // Volume envelope - clear, crisp click
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.4, now + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.05);
     } catch (e) {
       console.warn('Audio tick error:', e);
     }
   };
 
-  const stopClock = () => {
-    clockRunIdRef.current += 1;
-    if (clockSchedulerRef.current) {
-      clearInterval(clockSchedulerRef.current);
-      clockSchedulerRef.current = null;
-    }
-    const context = audioContextRef.current;
-    if (context && clockGainRef.current) {
-      try {
-        clockGainRef.current.gain.setValueAtTime(0, context.currentTime);
-      } catch (e) {}
-    }
-  };
-
-  const startClock = async () => {
-    const runId = clockRunIdRef.current + 1;
-    clockRunIdRef.current = runId;
-
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    let context = audioContextRef.current;
-    if (!context) {
-      context = new AudioContextClass();
-      audioContextRef.current = context;
-    }
-
-    if (!clockGainRef.current) {
-      const mainGain = context.createGain();
-      mainGain.connect(context.destination);
-      clockGainRef.current = mainGain;
-    }
-
-    try {
-      if (context.state === 'suspended') {
-        await context.resume();
-      }
-
-      if (clockRunIdRef.current !== runId) return;
-
-      clockGainRef.current.gain.setValueAtTime(0.6, context.currentTime);
-      setSoundEnabled(context.state === 'running');
-
-      if (!clockSchedulerRef.current) {
-        const msToNextSecond = 1000 - (Date.now() % 1000);
-        nextTickRef.current = context.currentTime + msToNextSecond / 1000;
-
-        const scheduleTicks = () => {
-          if (!audioContextRef.current) return;
-          const ctx = audioContextRef.current;
-          while (nextTickRef.current < ctx.currentTime + 0.2) {
-            playTick(ctx, nextTickRef.current);
-            nextTickRef.current += 1;
-          }
-        };
-
-        scheduleTicks();
-        clockSchedulerRef.current = setInterval(scheduleTicks, 40);
-      }
-    } catch (err) {
-      console.warn('AudioContext start error:', err);
-    }
-  };
-
-  const toggleSound = async () => {
-    if (!soundEnabled) {
-      await startClock();
-      if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        setSoundEnabled(true);
-      }
-    } else {
-      stopClock();
-      setSoundEnabled(false);
-    }
-  };
-
+  // Browser Autoplay Policy listener: resume AudioContext on first user gesture anywhere
   useEffect(() => {
-    // Attempt auto-start (some browsers allow if user clicked to navigate here)
-    startClock();
-
-    // Browser autoplay policy handler: enable audio on first user touch/click/keypress
-    const enableAudioOnUserGesture = async () => {
-      await startClock();
-      if (audioContextRef.current && audioContextRef.current.state === 'running') {
-        setSoundEnabled(true);
+    const resumeAudio = () => {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!audioCtxRef.current && AudioContextClass) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {});
       }
     };
 
-    window.addEventListener('click', enableAudioOnUserGesture, { once: true });
-    window.addEventListener('touchstart', enableAudioOnUserGesture, { once: true });
-    window.addEventListener('keydown', enableAudioOnUserGesture, { once: true });
+    window.addEventListener('click', resumeAudio);
+    window.addEventListener('touchstart', resumeAudio);
+    window.addEventListener('pointerdown', resumeAudio);
+    window.addEventListener('keydown', resumeAudio);
 
     return () => {
-      window.removeEventListener('click', enableAudioOnUserGesture);
-      window.removeEventListener('touchstart', enableAudioOnUserGesture);
-      window.removeEventListener('keydown', enableAudioOnUserGesture);
-      stopClock();
+      window.removeEventListener('click', resumeAudio);
+      window.removeEventListener('touchstart', resumeAudio);
+      window.removeEventListener('pointerdown', resumeAudio);
+      window.removeEventListener('keydown', resumeAudio);
     };
   }, []);
 
+  // Update countdown timer every second
   useEffect(() => {
     const initialTime = getTimeRemaining();
     if (initialTime.isLaunched) {
@@ -166,8 +100,14 @@ export default function CountdownScreen({ onLaunchComplete }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Play tick sound whenever the second changes
+  useEffect(() => {
+    if (transitionState === 'active') {
+      playTickSound();
+    }
+  }, [timeLeft.seconds, transitionState]);
+
   const triggerLaunchSequence = () => {
-    stopClock();
     setTransitionState('launching');
 
     setTimeout(() => {
