@@ -5,27 +5,45 @@ import { getTimeRemaining, LAUNCH_TIMESTAMP } from '../utils/launchConfig';
 export default function CountdownScreen({ onLaunchComplete }) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeRemaining());
   const [transitionState, setTransitionState] = useState('active'); // 'active' | 'launching' | 'finished'
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
   const audioContextRef = useRef(null);
   const clockGainRef = useRef(null);
   const clockSchedulerRef = useRef(null);
   const nextTickRef = useRef(0);
   const clockRunIdRef = useRef(0);
+  const tickCountRef = useRef(0);
 
   const playTick = (context, time) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
+    try {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
 
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(1800, time);
-    oscillator.frequency.exponentialRampToValueAtTime(1150, time + 0.035);
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(0.24, time + 0.002);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.045);
+      // Alternate between crisp high tick (1800Hz) and slightly lower tock (1300Hz)
+      const isTick = tickCountRef.current % 2 === 0;
+      tickCountRef.current += 1;
 
-    oscillator.connect(gain);
-    gain.connect(clockGainRef.current);
-    oscillator.start(time);
-    oscillator.stop(time + 0.05);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(isTick ? 1800 : 1300, time);
+      oscillator.frequency.exponentialRampToValueAtTime(isTick ? 900 : 700, time + 0.04);
+
+      // Volume envelope - crisp attack & decay
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(0.35, time + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+
+      oscillator.connect(gain);
+      if (clockGainRef.current) {
+        gain.connect(clockGainRef.current);
+      } else {
+        gain.connect(context.destination);
+      }
+
+      oscillator.start(time);
+      oscillator.stop(time + 0.055);
+    } catch (e) {
+      console.warn('Audio tick error:', e);
+    }
   };
 
   const stopClock = () => {
@@ -36,60 +54,99 @@ export default function CountdownScreen({ onLaunchComplete }) {
     }
     const context = audioContextRef.current;
     if (context && clockGainRef.current) {
-      clockGainRef.current.gain.setValueAtTime(0, context.currentTime);
+      try {
+        clockGainRef.current.gain.setValueAtTime(0, context.currentTime);
+      } catch (e) {}
     }
   };
 
   const startClock = async () => {
-    if (clockSchedulerRef.current) return;
     const runId = clockRunIdRef.current + 1;
     clockRunIdRef.current = runId;
 
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
 
-    const context = audioContextRef.current || new AudioContext();
-    audioContextRef.current = context;
+    let context = audioContextRef.current;
+    if (!context) {
+      context = new AudioContextClass();
+      audioContextRef.current = context;
+    }
+
     if (!clockGainRef.current) {
-      clockGainRef.current = context.createGain();
-      clockGainRef.current.connect(context.destination);
+      const mainGain = context.createGain();
+      mainGain.connect(context.destination);
+      clockGainRef.current = mainGain;
     }
 
     try {
-      await context.resume();
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+
       if (clockRunIdRef.current !== runId) return;
-      clockGainRef.current.gain.setValueAtTime(0.5, context.currentTime);
-      const millisecondsToNextSecond = 1000 - (Date.now() % 1000);
-      nextTickRef.current = context.currentTime + (millisecondsToNextSecond / 1000);
 
-      const scheduleTicks = () => {
-        while (nextTickRef.current < context.currentTime + 0.15) {
-          playTick(context, nextTickRef.current);
-          nextTickRef.current += 1;
-        }
-      };
+      clockGainRef.current.gain.setValueAtTime(0.6, context.currentTime);
+      setSoundEnabled(context.state === 'running');
 
-      scheduleTicks();
-      clockSchedulerRef.current = setInterval(scheduleTicks, 25);
-    } catch {}
+      if (!clockSchedulerRef.current) {
+        const msToNextSecond = 1000 - (Date.now() % 1000);
+        nextTickRef.current = context.currentTime + msToNextSecond / 1000;
+
+        const scheduleTicks = () => {
+          if (!audioContextRef.current) return;
+          const ctx = audioContextRef.current;
+          while (nextTickRef.current < ctx.currentTime + 0.2) {
+            playTick(ctx, nextTickRef.current);
+            nextTickRef.current += 1;
+          }
+        };
+
+        scheduleTicks();
+        clockSchedulerRef.current = setInterval(scheduleTicks, 40);
+      }
+    } catch (err) {
+      console.warn('AudioContext start error:', err);
+    }
+  };
+
+  const toggleSound = async () => {
+    if (!soundEnabled) {
+      await startClock();
+      if (audioContextRef.current && audioContextRef.current.state === 'running') {
+        setSoundEnabled(true);
+      }
+    } else {
+      stopClock();
+      setSoundEnabled(false);
+    }
   };
 
   useEffect(() => {
+    // Attempt auto-start (some browsers allow if user clicked to navigate here)
     startClock();
-    // Browsers that block automatic audio allow it after the first interaction.
-    const startAfterInteraction = () => startClock();
-    window.addEventListener('pointerdown', startAfterInteraction, { once: true });
-    window.addEventListener('keydown', startAfterInteraction, { once: true });
+
+    // Browser autoplay policy handler: enable audio on first user touch/click/keypress
+    const enableAudioOnUserGesture = async () => {
+      await startClock();
+      if (audioContextRef.current && audioContextRef.current.state === 'running') {
+        setSoundEnabled(true);
+      }
+    };
+
+    window.addEventListener('click', enableAudioOnUserGesture, { once: true });
+    window.addEventListener('touchstart', enableAudioOnUserGesture, { once: true });
+    window.addEventListener('keydown', enableAudioOnUserGesture, { once: true });
 
     return () => {
-      window.removeEventListener('pointerdown', startAfterInteraction);
-      window.removeEventListener('keydown', startAfterInteraction);
+      window.removeEventListener('click', enableAudioOnUserGesture);
+      window.removeEventListener('touchstart', enableAudioOnUserGesture);
+      window.removeEventListener('keydown', enableAudioOnUserGesture);
       stopClock();
     };
   }, []);
 
   useEffect(() => {
-    // Initial check
     const initialTime = getTimeRemaining();
     if (initialTime.isLaunched) {
       triggerLaunchSequence();
@@ -112,8 +169,7 @@ export default function CountdownScreen({ onLaunchComplete }) {
   const triggerLaunchSequence = () => {
     stopClock();
     setTransitionState('launching');
-    
-    // 2.5s cinematic sequence before revealing the full website
+
     setTimeout(() => {
       setTransitionState('finished');
       if (onLaunchComplete) {
@@ -141,6 +197,17 @@ export default function CountdownScreen({ onLaunchComplete }) {
         className="countdown-corner-art"
       />
 
+      {/* Sound Toggle Button (Fixes browser autoplay policy restriction) */}
+      <button
+        onClick={toggleSound}
+        className={`sound-toggle-btn ${soundEnabled ? 'sound-active' : ''}`}
+        aria-label={soundEnabled ? 'Mute clock sound' : 'Enable clock sound'}
+        title={soundEnabled ? 'Sound Enabled' : 'Click anywhere or tap here to enable clock ticking sound'}
+      >
+        <span className="sound-icon">{soundEnabled ? '🔊' : '🔇'}</span>
+        <span className="sound-label">{soundEnabled ? 'TICKING ON' : 'ENABLE SOUND'}</span>
+      </button>
+
       <div className="countdown-container">
         {/* Official Logo with breathing ambient glow */}
         <div className="countdown-logo-wrapper">
@@ -160,7 +227,7 @@ export default function CountdownScreen({ onLaunchComplete }) {
           <h1 className="countdown-brand">
             INTELLIGENT <span>IGUANAS</span>
           </h1>
-          
+
           <h2 className="countdown-tagline-main">
             THE COMMUNITY IS COMING
           </h2>
