@@ -21,7 +21,9 @@ export default function CountdownScreen({ onLaunchComplete }) {
       const ctx = audioCtxRef.current;
 
       if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
+        ctx.resume().catch(() => {
+          // Browser autoplay policy prevented playback.
+        });
       }
 
       if (ctx.state !== 'running') return;
@@ -54,41 +56,46 @@ export default function CountdownScreen({ onLaunchComplete }) {
     }
   };
 
-  // Immediate Audio Activation on Page Load & Comprehensive Interaction Listeners
+  // Attempt audio playback immediately when page loads
   useEffect(() => {
-    const activateAudio = () => {
+    const attemptAutoplay = () => {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!audioCtxRef.current && AudioContextClass) {
           audioCtxRef.current = new AudioContextClass();
         }
         if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume().then(() => {
-            playTickSound();
-          }).catch(() => {});
+          audioCtxRef.current.resume().catch(() => {
+            // Browser autoplay policy prevented playback.
+            // Keep existing audio unchanged and wait for earliest permitted interaction if necessary.
+          });
         }
       } catch (e) {}
     };
 
-    // Attempt sound immediately on load / component mount
-    activateAudio();
+    // Attempt playback immediately on component initialization
+    attemptAutoplay();
     playTickSound();
 
     if (document.readyState === 'complete') {
-      activateAudio();
+      attemptAutoplay();
     } else {
-      window.addEventListener('load', activateAudio, { once: true });
-      document.addEventListener('DOMContentLoaded', activateAudio, { once: true });
+      window.addEventListener('load', attemptAutoplay, { once: true });
+      document.addEventListener('DOMContentLoaded', attemptAutoplay, { once: true });
     }
 
-    // Listeners for all user interaction & movement events to un-suspend audio context instantly
-    const events = ['click', 'touchstart', 'pointerdown', 'pointermove', 'mousemove', 'keydown', 'scroll', 'mouseenter', 'focus'];
-    events.forEach((evt) => window.addEventListener(evt, activateAudio, { passive: true }));
+    // Earliest permitted interaction fallback if blocked by browser policy
+    const events = ['pointerdown', 'touchstart', 'click', 'keydown'];
+    const handleEarliestInteraction = () => {
+      attemptAutoplay();
+    };
+
+    events.forEach((evt) => window.addEventListener(evt, handleEarliestInteraction, { passive: true }));
 
     return () => {
-      window.removeEventListener('load', activateAudio);
-      document.removeEventListener('DOMContentLoaded', activateAudio);
-      events.forEach((evt) => window.removeEventListener(evt, activateAudio));
+      window.removeEventListener('load', attemptAutoplay);
+      document.removeEventListener('DOMContentLoaded', attemptAutoplay);
+      events.forEach((evt) => window.removeEventListener(evt, handleEarliestInteraction));
     };
   }, []);
 
