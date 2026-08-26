@@ -8,6 +8,7 @@ import QRCodeSection from './components/QRCode';
 import Footer from './components/Footer';
 import CountdownScreen from './components/CountdownScreen';
 import { isLaunched } from './utils/launchConfig';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const [whatsappLink, setWhatsappLink] = useState(null);
@@ -45,7 +46,12 @@ function App() {
 
   // STRICT LAUNCH GUARD: Before official launch time, render ONLY the CountdownScreen component
   if (!unlocked) {
-    return <CountdownScreen onLaunchComplete={handleLaunchComplete} />;
+    return (
+      <>
+        <CountdownScreen onLaunchComplete={handleLaunchComplete} />
+        <Analytics />
+      </>
+    );
   }
 
   // AFTER LAUNCH: Render the complete Intelligent Iguanas community website
@@ -60,6 +66,7 @@ function App() {
         <QRCodeSection whatsappLink={whatsappLink} />
       </main>
       <Footer whatsappLink={whatsappLink} />
+      <Analytics />
     </>
   );
 }
