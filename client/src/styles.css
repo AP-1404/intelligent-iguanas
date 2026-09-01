@@ -1,3 +1,7 @@
+/* ==========================================================================
+   INTELLIGENT IGUANAS — DESIGN SYSTEM
+   ========================================================================== */
+
 :root {
   --color-bg: #0a0a0a;
   --color-bg-secondary: #111111;
@@ -17,6 +21,7 @@
   --color-gray-700: #262626;
   --font-heading: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   --glow-sm: 0 0 10px rgba(57, 255, 20, 0.3);
   --glow-md: 0 0 20px rgba(57, 255, 20, 0.4);
   --glow-lg: 0 0 40px rgba(57, 255, 20, 0.3);
@@ -33,9 +38,13 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body { background: var(--color-bg); color: var(--color-gray-200); font-family: var(--font-body); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 
 
-@media (prefers-reduced-motion: reduce) { 
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ==========================================================================
+   NAVBAR
+   ========================================================================== */
 
 .navbar { position: fixed; top: 0; width: 100%; z-index: 1000; backdrop-filter: blur(20px); background: rgba(10,10,10,0.85); border-bottom: 1px solid rgba(57,255,20,0.1); transition: background var(--transition-normal); padding: 0 24px; }
 .navbar.scrolled { background: rgba(10,10,10,0.95); border-bottom-color: rgba(57,255,20,0.2); }
@@ -63,6 +72,10 @@ body { background: var(--color-bg); color: var(--color-gray-200); font-family: v
   .hamburger { display: flex; }
 }
 
+/* ==========================================================================
+   HERO (post-launch site)
+   ========================================================================== */
+
 .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 120px 24px 80px; }
 .hero-bg { position: absolute; inset: 0; z-index: 0; }
 .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(57,255,20,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(57,255,20,0.03) 1px, transparent 1px); background-size: 60px 60px; animation: gridMove 20s linear infinite; }
@@ -80,6 +93,10 @@ body { background: var(--color-bg); color: var(--color-gray-200); font-family: v
 .btn-primary:hover { box-shadow: var(--glow-lg); transform: translateY(-2px); }
 .btn-secondary { background: transparent; color: var(--color-neon); padding: 14px 32px; border-radius: 8px; font-family: var(--font-heading); font-weight: 600; font-size: 0.95rem; cursor: pointer; border: 1px solid rgba(57,255,20,0.4); transition: all var(--transition-normal); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
 .btn-secondary:hover { border-color: var(--color-neon); background: rgba(57,255,20,0.08); box-shadow: var(--glow-sm); }
+
+/* ==========================================================================
+   SECTIONS (post-launch site)
+   ========================================================================== */
 
 .section { padding: 100px 24px; position: relative; }
 .section-inner { max-width: var(--max-width); margin: 0 auto; }
@@ -155,7 +172,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-neon); ou
 }
 
 /* ==========================================================================
-   PRE-LAUNCH COUNTDOWN & LOCK SCREEN STYLES
+   PRE-LAUNCH COUNTDOWN SCREEN
    ========================================================================== */
 
 .countdown-screen {
@@ -169,20 +186,31 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-neon); ou
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  /* Scrollable — content may exceed viewport */
+  overflow-y: auto;
+  overflow-x: hidden;
   user-select: none;
-  transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+  transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(57, 255, 20, 0.2) transparent;
 }
 
-.countdown-screen.finished {
+.countdown-screen::-webkit-scrollbar { width: 4px; }
+.countdown-screen::-webkit-scrollbar-track { background: transparent; }
+.countdown-screen::-webkit-scrollbar-thumb { background: rgba(57, 255, 20, 0.2); border-radius: 2px; }
+
+/* Backward-compat alias */
+.countdown-screen.finished,
+.countdown-screen.phase-finished {
   opacity: 0;
-  transform: scale(1.05);
+  transform: scale(1.03);
   pointer-events: none;
 }
 
+/* ── Background ─────────────────────────────────────────────────────────── */
+
 .countdown-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
@@ -190,32 +218,31 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-neon); ou
 }
 
 .countdown-corner-art {
-  position: absolute;
+  position: fixed;
   right: 1.5rem;
   bottom: 5rem;
-  z-index: 1;
+  z-index: 2;
   width: clamp(42px, 5vw, 64px);
   height: auto;
   border-radius: 10px;
   box-shadow: -5px -5px 16px rgba(0, 0, 0, 0.45);
-  opacity: 0.86;
+  opacity: 0.75;
   pointer-events: none;
 }
 
 .countdown-grid {
   position: absolute;
   inset: 0;
-  background-image: 
-    linear-gradient(rgba(57, 255, 20, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(57, 255, 20, 0.035) 1px, transparent 1px);
-  background-size: 50px 50px;
-  animation: countdownGridPulse 15s linear infinite;
+  background-image:
+    linear-gradient(rgba(57, 255, 20, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57, 255, 20, 0.028) 1px, transparent 1px);
+  background-size: 52px 52px;
+  animation: countdownGridPulse 18s linear infinite;
 }
 
 @keyframes countdownGridPulse {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(25px, 25px); }
-  100% { transform: translate(50px, 50px); }
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(52px, 52px); }
 }
 
 .countdown-radial-glow {
@@ -223,46 +250,114 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-neon); ou
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(90vw, 850px);
-  height: min(90vh, 850px);
-  background: radial-gradient(circle, rgba(57, 255, 20, 0.12) 0%, rgba(57, 255, 20, 0.03) 45%, transparent 70%);
+  width: min(90vw, 900px);
+  height: min(90vh, 900px);
+  background: radial-gradient(
+    circle,
+    rgba(57, 255, 20, 0.10) 0%,
+    rgba(57, 255, 20, 0.03) 45%,
+    transparent 70%
+  );
   pointer-events: none;
-  animation: radialPulse 8s ease-in-out infinite alternate;
+  animation: radialPulse 9s ease-in-out infinite alternate;
 }
 
 @keyframes radialPulse {
-  0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(0.94); }
+  100% { opacity: 1;   transform: translate(-50%, -50%) scale(1.06); }
 }
 
 .countdown-circuit-overlay {
   position: absolute;
   inset: 0;
-  background: 
-    radial-gradient(1px 1px at 20px 30px, rgba(57, 255, 20, 0.2), transparent),
-    radial-gradient(1px 1px at 40px 70px, rgba(255, 255, 255, 0.15), transparent),
-    radial-gradient(1px 1px at 90px 40px, rgba(57, 255, 20, 0.15), transparent);
-  background-size: 100px 100px;
-  opacity: 0.6;
+  background:
+    radial-gradient(1px 1px at 20px 30px,  rgba(57, 255, 20, 0.18), transparent),
+    radial-gradient(1px 1px at 40px 70px,  rgba(255, 255, 255, 0.12), transparent),
+    radial-gradient(1px 1px at 90px 40px,  rgba(57, 255, 20, 0.14), transparent),
+    radial-gradient(1px 1px at 160px 120px, rgba(57, 255, 20, 0.10), transparent);
+  background-size: 120px 120px;
+  opacity: 0.5;
 }
+
+/* Vignette */
+.countdown-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+}
+
+/* ── Cinematic launch FX ────────────────────────────────────────────────── */
+
+/* Full-screen dim during transition */
+.launch-dim-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 3;
+  pointer-events: none;
+  animation: dimFadeInOut 5s ease-in-out forwards;
+}
+
+@keyframes dimFadeInOut {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Green scan line sweeping top→bottom */
+.launch-scan-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(57, 255, 20, 0.4) 20%,
+    var(--color-neon) 50%,
+    rgba(57, 255, 20, 0.4) 80%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 12px rgba(57, 255, 20, 0.9),
+    0 0 30px rgba(57, 255, 20, 0.5),
+    0 2px 60px rgba(57, 255, 20, 0.25);
+  z-index: 99999;
+  pointer-events: none;
+  animation: scanSweep 0.9s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+
+@keyframes scanSweep {
+  0%   { top: -4px;    opacity: 1; }
+  95%  { opacity: 0.8; }
+  100% { top: 100vh;   opacity: 0; }
+}
+
+/* ── Content container ──────────────────────────────────────────────────── */
 
 .countdown-container {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  max-width: 900px;
   width: 100%;
-  padding: 24px 20px;
+  max-width: 900px;
+  padding: 56px 20px 0;
   box-sizing: border-box;
+  /* Full-width on small container */
+  margin: 0 auto;
 }
+
+/* ── Logo ───────────────────────────────────────────────────────────────── */
 
 .countdown-logo-wrapper {
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,270 +365,943 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-neon); ou
 
 .logo-ambient-glow {
   position: absolute;
-  width: 190px;
-  height: 190px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  background: rgba(57, 255, 20, 0.25);
-  filter: blur(35px);
-  animation: logoGlowBreath 4s ease-in-out infinite alternate;
+  background: rgba(57, 255, 20, 0.22);
+  filter: blur(38px);
+  animation: logoGlowBreath 5s ease-in-out infinite alternate;
+  transition: opacity 0.8s ease, background 0.8s ease;
+}
+
+.logo-ambient-glow--intense {
+  background: rgba(57, 255, 20, 0.40);
+  filter: blur(50px);
+  animation: logoGlowBreath 3s ease-in-out infinite alternate;
 }
 
 @keyframes logoGlowBreath {
-  0% { transform: scale(0.9); opacity: 0.5; filter: blur(30px); }
-  100% { transform: scale(1.2); opacity: 0.85; filter: blur(45px); }
+  0%   { transform: scale(0.88); opacity: 0.5; }
+  100% { transform: scale(1.18); opacity: 0.9; }
+}
+
+/* ── Logo particle ring ── */
+/* A 0×0 anchor at the logo center; particles orbit via top/left offsets
+   while the wrapper slowly rotates, creating an orbital effect. */
+.logo-particle-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  animation: logoRingSpin 45s linear infinite;
+}
+
+.logo-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-neon);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(57, 255, 20, 0.8);
+  animation: particleGlow 3.2s ease-in-out infinite;
+}
+
+/* 8 particles on radius ~120px (120 * sin/cos 45° ≈ 85px) */
+.lp-0 { top: -120px; left:    0;    animation-delay: 0s;     }
+.lp-1 { top: -85px;  left:  85px;  animation-delay: 0.40s;  }
+.lp-2 { top:    0;   left:  120px; animation-delay: 0.80s;  }
+.lp-3 { top:  85px;  left:  85px;  animation-delay: 1.20s;  }
+.lp-4 { top:  120px; left:    0;   animation-delay: 1.60s;  }
+.lp-5 { top:  85px;  left: -85px;  animation-delay: 2.00s;  }
+.lp-6 { top:    0;   left: -120px; animation-delay: 2.40s;  }
+.lp-7 { top: -85px;  left: -85px;  animation-delay: 2.80s;  }
+
+@keyframes logoRingSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes particleGlow {
+  0%, 100% { opacity: 0.12; }
+  50%       { opacity: 0.75; }
 }
 
 .countdown-logo {
   position: relative;
   z-index: 2;
-  width: clamp(120px, 18vw, 170px);
-  height: clamp(120px, 18vw, 170px);
+  width: clamp(120px, 18vw, 168px);
+  height: clamp(120px, 18vw, 168px);
   border-radius: 50%;
   object-fit: cover;
-  filter: drop-shadow(0 0 25px rgba(57, 255, 20, 0.5));
-  animation: floatLogo 6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 22px rgba(57, 255, 20, 0.45));
+  animation: floatLogo 7s ease-in-out infinite alternate;
+  transition: filter 0.8s ease;
+}
+
+.countdown-logo--launched {
+  filter: drop-shadow(0 0 40px rgba(57, 255, 20, 0.75));
 }
 
 @keyframes floatLogo {
-  0% { transform: translateY(0); }
+  0%   { transform: translateY(0); }
   100% { transform: translateY(-10px); }
 }
 
+/* ── Brand heading ──────────────────────────────────────────────────────── */
+
 .countdown-header {
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 .countdown-brand {
   font-family: var(--font-heading);
-  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-size: clamp(2rem, 5.5vw, 3.6rem);
   font-weight: 800;
   color: var(--color-white);
   letter-spacing: 3px;
-  line-height: 1.1;
-  margin-bottom: 8px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+  transition: all 0.6s ease;
 }
 
 .countdown-brand span {
   color: var(--color-neon);
-  text-shadow: 0 0 25px rgba(57, 255, 20, 0.6);
+  text-shadow: 0 0 22px rgba(57, 255, 20, 0.55);
 }
 
 .countdown-tagline-main {
   font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 2.8vw, 1.6rem);
+  font-size: clamp(1rem, 2.6vw, 1.5rem);
   font-weight: 700;
   color: var(--color-neon);
-  letter-spacing: 4px;
-  margin-bottom: 12px;
-  text-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+  letter-spacing: 5px;
+  margin-bottom: 14px;
+  text-shadow: 0 0 14px rgba(57, 255, 20, 0.28);
+  transition: all 0.6s ease;
+}
+
+.countdown-launched-desc {
+  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+  color: var(--color-gray-300);
+  max-width: 520px;
+  margin: 0 auto 14px;
+  line-height: 1.75;
 }
 
 .countdown-motto {
   font-family: var(--font-heading);
-  font-size: clamp(0.8rem, 1.8vw, 1rem);
-  color: var(--color-gray-300);
+  font-size: clamp(0.75rem, 1.6vw, 0.95rem);
+  color: var(--color-gray-400);
   letter-spacing: 3px;
   font-weight: 500;
 }
 
+/* ── Countdown meta (label + status) ───────────────────────────────────── */
+
+.countdown-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
 .countdown-label-tag {
   font-family: var(--font-heading);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--color-gray-400);
-  letter-spacing: 4px;
+  letter-spacing: 5px;
   text-transform: uppercase;
-  margin-bottom: 18px;
 }
+
+.launch-seq-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-neon);
+  letter-spacing: 2px;
+  opacity: 0.85;
+}
+
+.launch-seq-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-neon);
+  box-shadow: 0 0 8px var(--color-neon);
+  animation: seqDotPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes seqDotPulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+/* ── Countdown cards ────────────────────────────────────────────────────── */
 
 .countdown-grid-cards {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(8px, 2.5vw, 20px);
-  margin-bottom: 32px;
-  flex-wrap: wrap;
+  gap: clamp(8px, 2vw, 18px);
+  margin-bottom: 28px;
+  flex-wrap: nowrap;
 }
 
 .countdown-card {
-  background: rgba(18, 22, 18, 0.7);
-  border: 1px solid rgba(57, 255, 20, 0.3);
+  background: rgba(16, 20, 16, 0.72);
+  border: 1px solid rgba(57, 255, 20, 0.28);
   border-radius: 16px;
   padding: clamp(14px, 2.5vw, 22px) clamp(16px, 3vw, 28px);
-  min-width: clamp(75px, 14vw, 110px);
+  min-width: clamp(72px, 13vw, 106px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(57, 255, 20, 0.1),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(57, 255, 20, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated top-edge accent */
+.countdown-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 200%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-neon), transparent);
+  animation: cardTopShimmer 4s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes cardTopShimmer {
+  0%   { left: -100%; }
+  100% { left:  100%; }
 }
 
 .countdown-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--color-neon);
-  box-shadow: 
-    0 15px 35px rgba(0, 0, 0, 0.7),
-    0 0 30px rgba(57, 255, 20, 0.25);
+  transform: translateY(-5px);
+  border-color: rgba(57, 255, 20, 0.55);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.65),
+    0 0 28px rgba(57, 255, 20, 0.2);
 }
 
+/* ── Number flip animation ── */
 .countdown-number {
   font-family: var(--font-heading);
-  font-size: clamp(2rem, 5.5vw, 3.6rem);
+  font-size: clamp(2rem, 5.5vw, 3.5rem);
   font-weight: 800;
   color: var(--color-white);
   line-height: 1;
-  text-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+  text-shadow: 0 0 18px rgba(57, 255, 20, 0.45);
   margin-bottom: 6px;
+  display: block;
+}
+
+@keyframes numFlip {
+  0%   { transform: translateY(0)    scaleY(1);   opacity: 1; }
+  40%  { transform: translateY(-7px) scaleY(0.75); opacity: 0; }
+  60%  { transform: translateY(7px)  scaleY(0.75); opacity: 0; }
+  100% { transform: translateY(0)    scaleY(1);   opacity: 1; }
+}
+
+.countdown-number.is-flipping {
+  animation: numFlip 0.43s ease-in-out;
 }
 
 .countdown-label {
   font-family: var(--font-heading);
-  font-size: clamp(0.65rem, 1.4vw, 0.8rem);
+  font-size: clamp(0.6rem, 1.3vw, 0.75rem);
   font-weight: 600;
   color: var(--color-neon);
   letter-spacing: 2px;
+  opacity: 0.85;
 }
 
-.countdown-separator {
-  font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
-  font-weight: 700;
-  color: rgba(57, 255, 20, 0.5);
+/* ── Card separator (two green dots) ───────────────────────────────────── */
+
+.countdown-sep {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   align-self: center;
-  margin-top: -16px;
-  animation: blinkColon 2s ease-in-out infinite;
+  margin-top: -14px;
 }
 
-@keyframes blinkColon {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+.countdown-sep span {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(57, 255, 20, 0.5);
+  animation: blinkSep 2s ease-in-out infinite;
 }
+
+.countdown-sep span:last-child {
+  animation-delay: 0.5s;
+}
+
+@keyframes blinkSep {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.9; }
+}
+
+/* ── Date badge ─────────────────────────────────────────────────────────── */
 
 .countdown-date-badge {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(14, 18, 14, 0.8);
-  border: 1px solid rgba(57, 255, 20, 0.25);
+  gap: 10px;
+  background: rgba(12, 16, 12, 0.82);
+  border: 1px solid rgba(57, 255, 20, 0.22);
   padding: 10px 22px;
   border-radius: 50px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+}
+
+.date-badge-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-neon);
+  box-shadow: 0 0 6px var(--color-neon);
+  flex-shrink: 0;
 }
 
 .launch-date-text {
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem);
   color: var(--color-white);
   letter-spacing: 1px;
 }
 
+.date-badge-sep {
+  color: rgba(57, 255, 20, 0.4);
+  font-size: 0.8rem;
+}
+
 .launch-time-text {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: clamp(0.75rem, 1.8vw, 0.9rem);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(0.72rem, 1.6vw, 0.85rem);
   color: var(--color-neon);
-  background: rgba(57, 255, 20, 0.12);
+  background: rgba(57, 255, 20, 0.1);
   padding: 3px 10px;
   border-radius: 20px;
   letter-spacing: 1px;
 }
 
-.countdown-lock-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+/* ── Post-launch hero CTA ───────────────────────────────────────────────── */
+
+.launched-cta-block {
+  margin-bottom: 36px;
 }
 
-.lock-icon-wrapper {
+.btn-launch-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-neon);
+  color: var(--color-bg);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  letter-spacing: 1.5px;
+  padding: 16px 40px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 24px rgba(57, 255, 20, 0.35);
+}
+
+.btn-launch-primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--glow-lg), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.btn-launch-primary.btn--unavailable {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── System status panel ────────────────────────────────────────────────── */
+
+.status-panel {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(10, 14, 10, 0.75);
+  border: 1px solid rgba(57, 255, 20, 0.14);
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(57, 255, 20, 0.06) inset,
+    0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.status-panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--color-gray-400);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.status-rows {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-indicator {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-gray-600);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.status-indicator--on {
+  background: var(--color-neon);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.7);
+  animation: statusPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(57, 255, 20, 0.5); }
+  50%       { box-shadow: 0 0 12px rgba(57, 255, 20, 0.9); }
+}
+
+.status-row-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-gray-400);
+  letter-spacing: 1.5px;
+  flex: 1;
+  text-align: left;
+}
+
+.status-row-value {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-gray-500);
+  letter-spacing: 1.5px;
+  transition: color 0.4s ease;
+}
+
+.status-row-value--on {
+  color: var(--color-neon);
+}
+
+/* ── Terminal panel ─────────────────────────────────────────────────────── */
+
+.terminal-panel {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(6, 8, 6, 0.88);
+  border: 1px solid rgba(57, 255, 20, 0.14);
+  border-radius: 14px;
+  margin-bottom: 60px;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(57, 255, 20, 0.06) inset,
+    0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: rgba(12, 16, 12, 0.9);
+  border-bottom: 1px solid rgba(57, 255, 20, 0.1);
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.terminal-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-dots span:nth-child(1) { background: #ff5f57; }
+.terminal-dots span:nth-child(2) { background: #ffbd2e; }
+.terminal-dots span:nth-child(3) { background: #28c840; }
+
+.terminal-title-bar {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-gray-500);
+  letter-spacing: 2px;
+  flex: 1;
+  text-align: center;
+}
+
+.terminal-body {
+  padding: 18px 20px 14px;
+  min-height: 110px;
+  text-align: left;
+}
+
+.terminal-line {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-gray-300);
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+  animation: termLineIn 0.25s ease-out;
+}
+
+@keyframes termLineIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.terminal-line--info {
+  color: rgba(57, 255, 20, 0.85);
+}
+
+.terminal-line--success {
+  color: var(--color-neon);
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
+  font-weight: 500;
+}
+
+.terminal-prompt {
+  color: rgba(57, 255, 20, 0.55);
+}
+
+.terminal-cursor-line {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-gray-300);
+  line-height: 1.7;
+}
+
+.terminal-cursor {
+  color: transparent;
+  user-select: none;
+}
+
+.terminal-cursor--on {
+  color: var(--color-neon);
+  text-shadow: 0 0 6px rgba(57, 255, 20, 0.8);
+}
+
+/* ── What's Behind the Gate? ────────────────────────────────────────────── */
+
+.gate-section {
+  width: 100%;
+  max-width: 860px;
+  margin-bottom: 60px;
+}
+
+.gate-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-neon);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.gate-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  color: var(--color-white);
+  letter-spacing: 2px;
+  margin-bottom: 36px;
+}
+
+.feature-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.feature-card {
+  background: rgba(12, 16, 12, 0.7);
+  border: 1px solid rgba(57, 255, 20, 0.12);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: left;
+  backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(57,255,20,0.4), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(57, 255, 20, 0.35);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card-num {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-neon);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  opacity: 0.75;
+}
+
+.feature-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-white);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.feature-card-desc {
+  font-size: 0.875rem;
+  color: var(--color-gray-400);
+  line-height: 1.65;
+}
+
+/* ── FOMO / Mystery section ─────────────────────────────────────────────── */
+
+.fomo-section {
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 56px;
+  padding: 40px 32px;
+  border-top: 1px solid rgba(57, 255, 20, 0.1);
+  border-bottom: 1px solid rgba(57, 255, 20, 0.1);
+}
+
+.fomo-signal {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: rgba(57, 255, 20, 0.6);
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+  animation: fomoSignalPulse 3s ease-in-out infinite;
+}
+
+.fomo-slash {
+  opacity: 0.45;
+  margin: 0 4px;
+}
+
+@keyframes fomoSignalPulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+.fomo-headline {
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  color: var(--color-white);
+  letter-spacing: 1.5px;
+  line-height: 1.2;
+  margin-bottom: 18px;
+}
+
+.fomo-body {
+  font-size: 1rem;
+  color: var(--color-gray-400);
+  line-height: 1.8;
+}
+
+.fomo-body strong {
+  color: var(--color-white);
+  font-weight: 600;
+}
+
+/* ── CTA section ────────────────────────────────────────────────────────── */
+
+.cta-section {
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 64px;
+}
+
+.cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 17px 36px;
+  background: var(--color-neon);
+  color: var(--color-bg);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 2px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+}
+
+.cta-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--glow-lg), 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 36px;
+  background: transparent;
+  color: var(--color-neon);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 2px;
+  border: 1px solid rgba(57, 255, 20, 0.35);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.cta-secondary:hover {
+  border-color: var(--color-neon);
+  background: rgba(57, 255, 20, 0.07);
+  box-shadow: var(--glow-sm), inset 0 0 16px rgba(57,255,20,0.04);
+  transform: translateY(-2px);
+}
+
+.cta-btn--disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
+.cta-links-notice {
+  font-size: 0.78rem;
+  color: var(--color-gray-500);
+  letter-spacing: 0.5px;
+}
+
+/* ── Page footer (inside countdown screen) ──────────────────────────────── */
+
+.countdown-footer {
+  width: 100%;
+  border-top: 1px solid rgba(57, 255, 20, 0.08);
+  padding: 40px 20px 48px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.lock-emoji {
-  font-size: 1.1rem;
+.countdown-footer-logo {
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 0 8px rgba(57,255,20,0.3));
 }
 
-.lock-text-title {
+.countdown-footer-brand {
   font-family: var(--font-heading);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--color-gray-300);
-  letter-spacing: 2px;
-}
-
-.lock-text-sub {
-  font-size: 0.8rem;
-  color: var(--color-gray-500);
-}
-
-/* Cinematic Launch Transition Overlay */
-.launch-unlocked-banner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 30px;
-  animation: zoomGlowIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes zoomGlowIn {
-  0% { transform: scale(0.8); opacity: 0; filter: blur(10px); }
-  100% { transform: scale(1); opacity: 1; filter: blur(0); }
-}
-
-.launch-unlocked-title {
-  font-family: var(--font-heading);
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 900;
   color: var(--color-white);
-  letter-spacing: 4px;
-  text-shadow: 0 0 30px var(--color-neon), 0 0 60px var(--color-neon);
-  margin-bottom: 10px;
-}
-
-.launch-unlocked-subtitle {
-  font-family: var(--font-heading);
-  font-size: 1.2rem;
-  color: var(--color-neon);
   letter-spacing: 2px;
 }
 
-/* Mobile Responsiveness for Pre-Launch Screen */
+.countdown-footer-tagline {
+  font-size: 0.72rem;
+  color: var(--color-neon);
+  letter-spacing: 3.5px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.countdown-footer-copy {
+  font-size: 0.72rem;
+  color: var(--color-gray-600);
+  margin-top: 6px;
+}
+
+/* ── Mobile — pre-launch screen ─────────────────────────────────────────── */
+
 @media (max-width: 600px) {
   .countdown-corner-art {
     top: 0.75rem;
     right: 0.75rem;
     bottom: auto;
-    width: 40px;
+    width: 38px;
     border-radius: 8px;
   }
 
-  .countdown-grid-cards {
-    gap: 8px;
+  .countdown-container {
+    padding-top: 40px;
   }
-  
+
+  .countdown-grid-cards {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
   .countdown-card {
-    min-width: 68px;
-    padding: 10px 12px;
+    min-width: 64px;
+    padding: 10px 10px;
     border-radius: 12px;
   }
 
-  .countdown-separator {
-    display: none;
+  .countdown-sep {
+    gap: 5px;
+  }
+
+  .countdown-sep span {
+    width: 4px;
+    height: 4px;
   }
 
   .countdown-date-badge {
-    padding: 8px 16px;
-    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 14px;
+    gap: 7px;
+  }
+
+  .feature-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .status-panel,
+  .terminal-panel {
+    border-radius: 12px;
+  }
+
+  .status-panel {
+    padding: 18px 18px;
+  }
+
+  .terminal-body {
+    padding: 14px 14px 10px;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    font-size: 0.85rem;
+    padding: 15px 24px;
+  }
+
+  .fomo-section {
+    padding: 28px 16px;
+  }
+
+  .gate-section {
+    padding: 0 4px;
+  }
+
+  .logo-particle-ring {
+    display: none; /* Hide orbit on very small screens to reduce clutter */
+  }
+}
+
+@media (max-width: 380px) {
+  .countdown-grid-cards {
+    gap: 4px;
+  }
+
+  .countdown-card {
+    min-width: 58px;
+    padding: 9px 8px;
+  }
+
+  .countdown-brand {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 768px) {
+  .feature-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .cta-buttons {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 769px) {
+  .cta-buttons {
+    flex-direction: row;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    width: auto;
+    min-width: 220px;
   }
 }
