@@ -66,7 +66,8 @@ export default function About() {
         <div className="about-grid">
           {cards.map((card, i) => (
             <div key={card.title} className={`about-card reveal reveal-delay-${i + 1}`}>
-              <div className="about-card-icon" style={{ color: 'var(--color-neon)' }}>
+              <span className="about-card-num">{String(i + 1).padStart(2, '0')}</span>
+              <div className="about-card-icon" style={{ color: 'var(--color-lime)' }}>
                 {card.icon}
               </div>
               <h3>{card.title}</h3>
@@ -74,6 +75,7 @@ export default function About() {
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

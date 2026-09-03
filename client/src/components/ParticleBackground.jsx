@@ -21,26 +21,52 @@ export default function ParticleBackground() {
 
     const initParticles = () => {
       particles = [];
-      const numParticles = 50;
+      const numParticles = Math.min(65, Math.floor(window.innerWidth / 22));
       for (let i = 0; i < numParticles; i++) {
+        const isCyan = i % 3 === 0;
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5 + 0.5,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          opacity: Math.random() * 0.3 + 0.3
+          radius: Math.random() * 1.8 + 0.6,
+          vx: (Math.random() - 0.5) * 0.45,
+          vy: (Math.random() - 0.5) * 0.45,
+          color: isCyan ? '0, 229, 255' : '57, 255, 20',
+          opacity: Math.random() * 0.45 + 0.25
         });
       }
     };
 
     const drawParticles = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const len = particles.length;
+
+      // Draw constellation connecting lines
+      for (let i = 0; i < len; i++) {
+        for (let j = i + 1; j < len; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const maxDist = 130;
+
+          if (dist < maxDist) {
+            const alpha = (1 - dist / maxDist) * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(57, 255, 20, ${alpha})`;
+            ctx.lineWidth = 0.75;
+            ctx.stroke();
+          }
+        }
+      }
       
+      // Draw particle nodes
       particles.forEach(p => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(57, 255, 20, ${p.opacity})`;
+        ctx.fillStyle = `rgba(${p.color}, ${p.opacity})`;
+        ctx.shadowColor = `rgba(${p.color}, 0.6)`;
+        ctx.shadowBlur = 8;
         ctx.fill();
 
         if (!prefersReducedMotion) {
@@ -51,6 +77,7 @@ export default function ParticleBackground() {
           if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
         }
       });
+      ctx.shadowBlur = 0;
     };
 
     const animate = () => {

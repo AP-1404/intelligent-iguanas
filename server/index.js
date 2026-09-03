@@ -24,14 +24,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const LAUNCH_DATE_ISO = '2026-09-04T00:00:00+05:30';
+const LAUNCH_DATE_ISO = '2026-09-01T00:00:00+05:30';
 
 // Public config endpoint
 app.get('/api/config', (req, res) => {
   const now = new Date();
   const launchDate = new Date(LAUNCH_DATE_ISO);
   const isLaunched = now >= launchDate;
-  const whatsappGroupLink = process.env.WHATSAPP_GROUP_LINK || null;
+  const whatsappGroupLink = process.env.WHATSAPP_GROUP_LINK || 'https://chat.whatsapp.com/IntelligentIguanas';
   
   res.json({
     launchDate: LAUNCH_DATE_ISO,
@@ -40,6 +40,22 @@ app.get('/api/config', (req, res) => {
     whatsappGroupLink: isLaunched ? whatsappGroupLink : null,
     communityName: 'Intelligent Iguanas',
     tagline: 'Learn • Share • Build • Grow',
+  });
+});
+
+// Contact form submission endpoint
+app.post('/api/contact', (req, res) => {
+  const { name, phone, email, message } = req.body || {};
+
+  if (!name || !phone || !email || !message) {
+    return res.status(400).json({ success: false, error: 'All fields are required.' });
+  }
+
+  console.log(`📩 New Contact Submission from ${name} (${email}, ${phone}):`, message);
+
+  res.json({
+    success: true,
+    message: 'Thank you for reaching out! We have received your message.',
   });
 });
 

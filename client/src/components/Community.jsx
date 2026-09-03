@@ -22,13 +22,18 @@ export default function Community() {
         </p>
         <div className="community-grid">
           {features.map((f, i) => (
-            <div key={f.title} className={`community-card reveal reveal-delay-${(i % 3) + 1}`}>
+            <div
+              key={f.title}
+              className={`community-card reveal reveal-delay-${(i % 3) + 1}`}
+              data-emoji={f.icon}
+            >
               <div className="community-card-icon" aria-hidden="true">{f.icon}</div>
               <h3>{f.title}</h3>
               <p>{f.desc}</p>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );
