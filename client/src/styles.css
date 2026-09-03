@@ -1893,3 +1893,48 @@ h1#hero-heading.hero-title,
   .form-grid { grid-template-columns: 1fr; }
   .form-group-full { grid-column: span 1; }
 }
+
+/* ==========================================================================
+   HERITAGE EMBLEM — DESKTOP & MOBILE
+   ========================================================================== */
+
+.corner-emblem,
+.countdown-corner-art {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 1001;
+  width: clamp(48px, 6vw, 68px);
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 16px rgba(57, 255, 20, 0.25);
+  opacity: 0.94;
+  pointer-events: none;
+  transition: all var(--transition-normal);
+}
+
+@media (max-width: 768px) {
+  .corner-emblem,
+  .countdown-corner-art {
+    position: fixed;
+    right: 1.2rem;
+    bottom: 1.2rem;
+    top: auto;
+    width: 46px;
+    z-index: 1001;
+    opacity: 0.96;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 14px rgba(57, 255, 20, 0.3);
+  }
+}
+
+@media (max-width: 480px) {
+  .corner-emblem,
+  .countdown-corner-art {
+    right: 0.9rem;
+    bottom: 0.9rem;
+    top: auto;
+    width: 42px;
+    border-radius: 9px;
+  }
+}
