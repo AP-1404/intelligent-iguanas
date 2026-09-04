@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import useScrollReveal from '../hooks/useScrollReveal';
+import { CONTACT_EMAIL } from '../utils/launchConfig';
 
 export default function ContactSection() {
   useScrollReveal();
@@ -56,7 +57,10 @@ export default function ContactSection() {
           Send Us a Message
         </h2>
         <p className="section-subheading reveal reveal-delay-1">
-          Have a question, feedback, or want to collaborate? Fill out the form below and we’ll get back to you.
+          Have a question, feedback, or want to collaborate? Fill out the form below or email us directly at{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="contact-direct-email">
+            {CONTACT_EMAIL}
+          </a>
         </p>
 
         <div className="contact-card reveal reveal-delay-2">

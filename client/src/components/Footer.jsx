@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from '../utils/launchConfig';
+
 export default function Footer({ whatsappLink, onJoinRequest }) {
   const currentYear = new Date().getFullYear();
 
@@ -20,6 +22,9 @@ export default function Footer({ whatsappLink, onJoinRequest }) {
           <p className="footer-text">
             A WhatsApp community for curious minds — learning, sharing, and growing together.
           </p>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="footer-email-link">
+            ✉️ {CONTACT_EMAIL}
+          </a>
         </div>
 
         {/* Actions column */}

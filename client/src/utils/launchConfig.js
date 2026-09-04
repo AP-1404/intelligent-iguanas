@@ -1,6 +1,7 @@
 export const LAUNCH_DATE_ISO = '2026-09-01T00:00:00+05:30';
 export const LAUNCH_TIMESTAMP = new Date(LAUNCH_DATE_ISO).getTime();
 export const DEFAULT_WHATSAPP_LINK = 'https://chat.whatsapp.com/IntelligentIguanas';
+export const CONTACT_EMAIL = 'iguana.intelligent@gmail.com';
 
 /**
  * Calculates remaining time until launch timestamp
