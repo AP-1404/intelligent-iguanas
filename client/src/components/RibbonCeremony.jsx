@@ -312,7 +312,7 @@ export default function RibbonCeremony({ onComplete }) {
           <div className={`rc-copy ${phase !== 'idle' ? 'rc-copy--in' : ''} ${isCut ? 'rc-copy--out' : ''}`}>
             <p className="rc-eyebrow">INTELLIGENT IGUANAS</p>
             <h1 className="rc-headline">
-              THE FUTURE<br />IS READY.
+              WELCOME TO<br />INTELLIGENT IGUANAS.
             </h1>
             <p className="rc-sub">You're among the first to enter.</p>
           </div>
